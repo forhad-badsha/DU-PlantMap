@@ -1,0 +1,156 @@
+<!DOCTYPE html><html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>DU PlantMap</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#f6f8f4;--c:#fff;--t:#1b2a1e;--m:#667;--g:#2e7d32;--b:#dde5da}
+@media(prefers-color-scheme:dark){:root{--bg:#121812;--c:#1c261d;--t:#e8efe6;--m:#9aa;--g:#66bb6a;--b:#2d3b2e}}
+*{box-sizing:border-box;margin:0}html,body{height:100%}
+body{font:15px system-ui,"Noto Sans Bengali",sans-serif;background:var(--bg);color:var(--t);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--g);color:#fff}header b{flex:1}
+button,select,input,textarea{font:inherit;color:inherit}
+button{border:0;border-radius:10px;padding:9px 14px;background:var(--g);color:#fff;cursor:pointer}button:disabled{opacity:.4}
+button.o{background:none;border:1px solid var(--b);color:var(--t)}
+main{flex:1;position:relative;overflow:hidden}
+.v{position:absolute;inset:0;overflow:auto;padding:12px;display:none}.v.on{display:block}
+#v_map{padding:0}#map{height:100%}
+nav{display:flex;background:var(--c);border-top:1px solid var(--b);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;color:var(--m);border-radius:0;font-size:11px;padding:7px 2px}nav button.on{color:var(--g);font-weight:700}
+nav .plus{flex:0 0 52px;background:var(--g);color:#fff;border-radius:50%;height:52px;margin:-14px 4px 4px;font-size:26px;padding:0}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;cursor:pointer}
+.card img{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--b)}
+.ch{display:inline-block;padding:5px 10px;border:1px solid var(--b);border-radius:99px;margin:2px;font-size:13px;cursor:pointer;user-select:none}
+.ch.on{background:var(--g);color:#fff;border-color:var(--g)}
+#sh{position:fixed;inset:0;background:#0006;display:none;align-items:flex-end;z-index:9999}#sh.on{display:flex}
+#shb{background:var(--bg);width:100%;max-height:92dvh;overflow:auto;border-radius:18px 18px 0 0;padding:14px;animation:u .2s}
+@keyframes u{from{transform:translateY(40px);opacity:0}}
+input,select,textarea{width:100%;padding:9px;border:1px solid var(--b);border-radius:10px;background:var(--c);margin:3px 0 8px}
+input[type=checkbox]{width:auto}
+.ph{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.ph label{aspect-ratio:1;border:2px dashed var(--b);border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;overflow:hidden;position:relative;cursor:pointer}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+table{border-collapse:collapse;font-size:12px}td,th{padding:5px 6px;border:1px solid var(--b);text-align:center;min-width:26px}
+td:first-child,th:first-child{position:sticky;left:0;background:var(--c);text-align:left;white-space:nowrap}
+.vw .col{display:none!important}
+#ms,#adj{position:absolute;left:10px;right:10px;z-index:800;background:var(--c);border-radius:12px;padding:8px 10px;box-shadow:0 2px 8px #0004;align-items:center;gap:8px}#ms{top:10px;display:flex}#adj{bottom:14px;display:none}#mr{padding:0;border:0;margin:0;background:none}#sat{bottom:64px!important}#loc,#sat{position:absolute;right:10px;bottom:14px;z-index:800;background:var(--c);color:var(--t);box-shadow:0 2px 8px #0004}
+@media print{header,nav,main,.np{display:none!important}#sh{position:static;display:block;background:none}#shb{max-height:none;overflow:visible}}
+</style></head><body>
+<header><b>🌿 DU PlantMap</b><button class="o" style="color:#fff;border-color:#fff8" data-a="lang">EN/বাং</button></header>
+<main>
+<div class="v on" id="v_map"><div id="map"></div><button id="loc">📍</button><button id="sat">🛰️</button><div id="ms"><b id="ml" style="min-width:84px"></b><input type="range" id="mr" min="0" max="12" value="0"></div><div id="adj"><span style="flex:1" data-i="drag"></span><button data-a="aok">✔</button><button class="o" data-a="acx">✕</button></div></div>
+<div class="v" id="v_list"><input id="q"><div id="fb"></div><div id="lc" style="margin-top:8px"></div></div>
+<div class="v" id="v_cal"><div id="cb" style="overflow:auto"></div></div>
+<div class="v" id="v_more"><p id="cnt" style="margin-bottom:12px"></p>
+<p class="col"><button data-a="exp" data-i="exp"></button></p><br>
+<p class="col"><button class="o" data-a="imp" data-i="imp"></button><input type="file" id="imf" accept=".zip,.json" hidden></p><br>
+<p><button class="o" data-a="qa" data-i="qr"></button></p><br>
+<p><button class="o" data-a="lang" data-i="lang"></button></p></div>
+</main>
+<nav><button data-v="map" class="on">🗺️<br><span data-i="map"></span></button><button data-v="list">🌳<br><span data-i="list"></span></button><button class="plus col" data-a="add">＋</button><button data-v="cal">📅<br><span data-i="cal"></span></button><button data-v="more">⚙️<br><span data-i="more"></span></button></nav>
+<div id="sh"><div id="shb"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const COLLECTOR=true; // false = public viewer-only mode (hides add/edit/export)
+const T={map:'ম্যাপ|Map',list:'গাছ|Plants',add:'নতুন গাছ|New plant',cal:'ক্যালেন্ডার|Calendar',more:'আরও|More',search:'খুঁজুন…|Search…',fam:'গোত্র|Family',now:'এখন ফুল ফুটছে|Flowering now',tree:'বৃক্ষ|Tree',shrub:'গুল্ম|Shrub',herb:'ওষধি|Herb',climb:'লতা|Climber',other:'অন্যান্য|Other',nat:'দেশি|Native',exo:'বিদেশি|Exotic',bn:'বাংলা নাম|Bangla name',en:'English name',sci:'বৈজ্ঞানিক নাম|Scientific name',fl:'ফুল ফোটার মাস|Flowering months',fr:'ফল ধরার মাস|Fruiting months',note:'নোট|Notes',save:'সেভ|Save',edit:'সম্পাদনা|Edit',del:'মুছুন|Delete',p_whole:'পুরো গাছ|Whole tree',p_bark:'কাণ্ড|Bark',p_leaf:'পাতা|Leaf',p_fruit:'ফুল/ফল|Flower/fruit',wait:'অপেক্ষা করুন|wait',ov:'কম নির্ভুলতায়ও সেভ করব|Save even if accuracy is low',dup:'৩ মিটারের মধ্যে আরেকটি গাছ আছে:|Another plant within 3 m:',upd:'বর্তমান লোকেশন দিয়ে আপডেট|Update with current location',exp:'ডেটা এক্সপোর্ট (ZIP)|Export data (ZIP)',imp:'ডেটা ইমপোর্ট|Import data',qr:'সব QR প্রিন্ট|Print all QR',lang:'English / বাংলা',sure:'নিশ্চিত?|Sure?',total:'মোট গাছ|Total plants',adj:'ম্যাপে ঠিক করুন|Set on map',drag:'পিন টেনে ঠিক জায়গায় বসান|Drag the pin to the exact spot',all:'সব মাস|All months'};
+const M={bn:['জানু','ফেব্রু','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টে','অক্টো','নভে','ডিসে'],en:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']};
+const HC={tree:'#2e7d32',shrub:'#8bc34a',herb:'#fbc02d',climb:'#8e24aa',other:'#607d8b'},K=['whole','bark','leaf','fruit'];
+let PL=[],LG='bn',F={q:'',h:new Set,o:new Set,fam:'',now:0},pos=null,tmp={},lt=0,first=1,db,MS=0,adj=null,am=null,fp=null;
+try{LG=localStorage.lang||'bn'}catch(e){}
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const t=k=>T[k].split('|')[LG=='bn'?0:1],mn=new Date().getMonth()+1;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nm=p=>(LG=='bn'?p.bn||p.en:p.en||p.bn)||p.sci||p.id;
+const D=(a,b,c,d)=>{const r=Math.PI/180;return 6371000*Math.hypot((c-a)*r,(d-b)*r*Math.cos(a*r))};
+const dist=p=>D(pos.latitude,pos.longitude,p.lat,p.lng);
+const U=new WeakMap(),sv_=v=>v?(typeof v=='string'?v:U.get(v)||(U.set(v,URL.createObjectURL(v)),U.get(v))):'';
+const src=(p,k)=>sv_(p.ph&&p.ph[k]),th=p=>{const k=K.find(k=>p.ph&&p.ph[k]);return k?src(p,k):''};
+const mm=a=>(a||[]).map(m=>M[LG][m-1]).join(', ')||'—',lnk=id=>location.href.split('#')[0].split('?')[0]+'?id='+encodeURIComponent(id);
+const qrimg=id=>{const q=qrcode(0,'M');q.addData(lnk(id));q.make();return q.createImgTag(4)};
+// ---- storage (IndexedDB: works offline, photos kept as blobs)
+const open=()=>new Promise(r=>{const q=indexedDB.open('dupm',1);q.onupgradeneeded=()=>q.result.createObjectStore('p',{keyPath:'id'});q.onsuccess=()=>{db=q.result;r()}});
+const st=m=>db.transaction('p',m).objectStore('p');
+const all=()=>new Promise(r=>{const q=st('readonly').getAll();q.onsuccess=()=>r(q.result)});
+const put=p=>new Promise(r=>{const q=st('readwrite').put(p);q.onsuccess=r});
+const rm=id=>new Promise(r=>{const q=st('readwrite').delete(id);q.onsuccess=r});
+async function load(){PL=await all();if(!PL.length){try{const r=await fetch('plants.json');if(r.ok)PL=await r.json()}catch(e){}}
+render();if(first&&PL.length){first=0;map.fitBounds(PL.map(p=>[p.lat,p.lng]),{padding:[30,30],maxZoom:19})}}
+const rs=f=>new Promise(r=>{const i=new Image;i.onload=()=>{const s=Math.min(1,1280/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);c.toBlob(r,'image/jpeg',.82)};i.src=URL.createObjectURL(f)});
+// ---- map
+const map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([23.7287,90.3979],17),lg=L.layerGroup().addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles © Esri'});
+let meM;function me(){if(!pos)return;const ll=[pos.latitude,pos.longitude];meM?meM.setLatLng(ll):meM=L.circleMarker(ll,{radius:7,color:'#fff',weight:3,fillColor:'#1976d2',fillOpacity:1}).addTo(map)}
+navigator.geolocation&&navigator.geolocation.watchPosition(p=>{pos=p.coords;me();gpsUI();if(Date.now()-lt>5e3){lt=Date.now();ls()}},()=>{},{enableHighAccuracy:true,maximumAge:2000});
+$('#loc').onclick=()=>pos&&map.setView([pos.latitude,pos.longitude],19);
+// ---- filtering + views
+const FL=()=>{const s=F.q.toLowerCase();return PL.filter(p=>(!s||[p.id,p.bn,p.en,p.sci,p.fam].join(' ').toLowerCase().includes(s))&&(!F.h.size||F.h.has(p.hab))&&(!F.o.size||F.o.has(p.org))&&(!F.fam||p.fam==F.fam)&&(!F.now||(p.fl||[]).includes(mn)))};
+function mk(){lg.clearLayers();FL().forEach(p=>{let o={radius:9,color:'#fff',weight:2,fillColor:HC[p.hab]||HC.other,fillOpacity:.9};
+if(MS){const f=(p.fl||[]).includes(MS),r=(p.fr||[]).includes(MS);o=f||r?{radius:10,color:f&&r?'#ff9800':'#fff',weight:f&&r?4:2,fillColor:f?'#e91e63':'#ff9800',fillOpacity:.95}:{radius:5,color:'#fff',weight:1,fillColor:'#9e9e9e',fillOpacity:.4}}
+L.circleMarker([p.lat,p.lng],o).on('click',()=>{if(!am)det(p.id)}).addTo(lg)})}
+function ml(){$('#ml').innerHTML=MS?M[LG][MS-1]+' <span style="color:#e91e63">●</span><span style="color:#ff9800">●</span>':t('all')}
+function fb(){const fams=[...new Set(PL.map(p=>p.fam).filter(Boolean))].sort(),c=(g,v,on,l)=>`<span class="ch${on?' on':''}" data-g="${g}" data-v="${v}">${l}</span>`;
+$('#fb').innerHTML=Object.keys(HC).map(h=>c('h',h,F.h.has(h),t(h))).join('')+['nat','exo'].map(o=>c('o',o,F.o.has(o),t(o))).join('')+c('now','',F.now,'🌸 '+t('now'))+`<select id="fs"><option value="">${t('fam')}: ∗</option>${fams.map(f=>`<option${F.fam==f?' selected':''}>${esc(f)}</option>`).join('')}</select>`}
+function ls(){const a=FL();if(pos)a.sort((x,y)=>dist(x)-dist(y));
+$('#lc').innerHTML=a.slice(0,200).map(p=>`<div class="card" data-id="${esc(p.id)}"><img src="${th(p)}" alt=""><div style="flex:1"><b>${esc(nm(p))}</b><br><i>${esc(p.sci||'')}</i><br><small>${esc(p.id)} · ${esc(p.fam||'')}${pos?' · '+Math.round(dist(p))+' m':''}</small></div></div>`).join('')||'—'}
+function cal(){const a=FL().slice(0,200),H=M[LG];
+$('#cb').innerHTML=`<table><tr><th>${t('list')}</th>${H.map((m,i)=>`<th${i+1==mn?' style="color:var(--g);text-decoration:underline"':''}>${m}</th>`).join('')}</tr>${a.map(p=>`<tr><td>${esc(nm(p))}</td>${H.map((_,i)=>{const f=(p.fl||[]).includes(i+1),r=(p.fr||[]).includes(i+1);return`<td style="background:${f&&r?'linear-gradient(90deg,#e91e63 50%,#ff9800 50%)':f?'#e91e63':r?'#ff9800':''}"></td>`}).join('')}</tr>`).join('')}</table><p style="margin-top:8px"><span style="color:#e91e63">■</span> ${t('fl')} &nbsp;<span style="color:#ff9800">■</span> ${t('fr')}</p>`}
+function render(){mk();ml();fb();ls();cal();$$('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));$('#q').placeholder=t('search');$('#cnt').textContent=t('total')+': '+PL.length}
+function setV(v){$$('.v').forEach(x=>x.classList.toggle('on',x.id=='v_'+v));$$('nav [data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v==v));if(v=='map')setTimeout(()=>map.invalidateSize(),50)}
+// ---- sheet, detail, form
+const sheet=h=>{$('#shb').innerHTML=h;$('#sh').classList.add('on')},close=()=>$('#sh').classList.remove('on');
+function det(id){const p=PL.find(x=>x.id==id);if(!p)return;
+sheet(`<div style="display:flex;gap:6px;overflow:auto">${K.map(k=>src(p,k)?`<img src="${src(p,k)}" style="height:140px;border-radius:10px" alt="">`:'').join('')}</div>
+<h2 style="margin-top:8px">${esc(nm(p))}</h2><p><i>${esc(p.sci||'')}</i> · ${esc(p.fam||'')}</p><p>${t(p.hab||'other')} · ${t(p.org||'nat')}</p>
+<p>🌸 ${mm(p.fl)}<br>🍎 ${mm(p.fr)}</p><p>${esc(p.note||'')}</p>
+<p><small>${esc(p.id)} · ${(+p.lat).toFixed(6)}, ${(+p.lng).toFixed(6)} (${p.man?'✋':'±'+Math.round(p.acc||0)+' m'})</small></p><div>${qrimg(p.id)}</div>
+<p style="margin-top:10px"><span class="col"><button data-a="edit" data-id="${esc(p.id)}">${t('edit')}</button> <button class="o" data-a="del" data-id="${esc(p.id)}">${t('del')}</button></span> <button class="o" data-a="x">✕</button></p>`)}
+const mc=a=>M[LG].map((m,i)=>`<span class="ch${(a||[]).includes(i+1)?' on':''}" data-m="${i+1}">${m}</span>`).join('');
+const opt=(o,v)=>o.map(k=>`<option value="${k}"${k==v?' selected':''}>${t(k)}</option>`).join('');
+function form(p){adj=null;fp=p||{};const e=!!p;p=p||{id:'CH-'+String(PL.reduce((n,x)=>Math.max(n,+(x.id.match(/\d+$/)||0)),0)+1).padStart(2,'0'),fl:[],fr:[],ph:{},hab:'tree',org:'nat'};tmp={...p.ph};
+const fams=[...new Set(PL.map(x=>x.fam).filter(Boolean))];
+sheet(`<h3>${t(e?'edit':'add')}</h3><div class="ph">${K.map(k=>`<label data-k="${k}"><span>📷 ${t('p_'+k)}</span><input type="file" accept="image/*" capture="environment" hidden>${tmp[k]?`<img src="${sv_(tmp[k])}" alt="">`:''}</label>`).join('')}</div>
+<p id="gs"></p><button class="o" data-a="adj" style="margin-bottom:8px">🗺️ ${t('adj')}</button>${e?`<label><input type="checkbox" id="ul"> ${t('upd')}</label>`:`<label><input type="checkbox" id="ov"> ${t('ov')}</label>`}
+<input id="fid" value="${esc(p.id)}" ${e?'readonly':''} placeholder="ID"><input id="fbn" placeholder="${t('bn')}" value="${esc(p.bn)}"><input id="fen" placeholder="${t('en')}" value="${esc(p.en)}"><input id="fsc" placeholder="${t('sci')}" value="${esc(p.sci)}">
+<input id="ffa" list="dl" placeholder="${t('fam')}" value="${esc(p.fam)}"><datalist id="dl">${fams.map(f=>`<option value="${esc(f)}">`).join('')}</datalist>
+<select id="fh">${opt(Object.keys(HC),p.hab)}</select><select id="fo">${opt(['nat','exo'],p.org)}</select>
+<p>🌸 ${t('fl')}</p><div id="ffl">${mc(p.fl)}</div><p>🍎 ${t('fr')}</p><div id="ffr">${mc(p.fr)}</div>
+<textarea id="fno" rows="2" placeholder="${t('note')}">${esc(p.note)}</textarea>
+<button id="sv" data-a="sv">${t('save')}</button> <button class="o" data-a="x">✕</button>`);gpsUI()}
+function gpsUI(){const g=$('#gs');if(!g)return;const a=pos?pos.accuracy:0;
+g.innerHTML=pos?`📍 ±${Math.round(a)} m <b style="color:${a<=10?'#2e7d32':a<=20?'#f9a825':'#d32f2f'}">${a<=20?'✔':t('wait')}</b>`:'📍 …';if(adj)g.innerHTML+=' · 🗺️ ✔';
+const s=$('#sv');if(s&&!$('#fid').readOnly)s.disabled=!adj&&(!pos||(a>20&&!$('#ov').checked))}
+async function save(){const e=$('#fid').readOnly,id=$('#fid').value.trim(),old=PL.find(x=>x.id==id),v=i=>$('#'+i).value.trim(),mo=i=>$$('#'+i+' .ch.on').map(x=>+x.dataset.m);
+if(!id||(!e&&old))return alert('ID!');
+const p={...(old||{}),id,bn:v('fbn'),en:v('fen'),sci:v('fsc'),fam:v('ffa'),hab:v('fh'),org:v('fo'),note:v('fno'),fl:mo('ffl'),fr:mo('ffr'),ph:tmp,ts:old?old.ts:Date.now()};
+if(adj||!e||$('#ul').checked){if(adj){p.lat=adj.lat;p.lng=adj.lng;p.man=1}else{if(!pos)return;p.lat=pos.latitude;p.lng=pos.longitude;p.acc=pos.accuracy;delete p.man}
+const n=PL.find(x=>x.id!=id&&D(x.lat,x.lng,p.lat,p.lng)<3);if(n&&!confirm(t('dup')+' '+n.id))return}
+await put(p);await load();close()}
+// ---- export / import / QR sheet
+async function exp(){const z=new JSZip(),out=[];for(const p of PL){const o={...p,ph:{}};for(const k in p.ph||{}){const v=p.ph[k];if(v instanceof Blob){const n=`photos/${p.id}_${k}.jpg`;z.file(n,v);o.ph[k]=n}else o.ph[k]=v}out.push(o)}
+z.file('plants.json',JSON.stringify(out,null,1));const a=document.createElement('a');a.href=URL.createObjectURL(await z.generateAsync({type:'blob'}));a.download='du-plantmap-'+new Date().toISOString().slice(0,10)+'.zip';a.click()}
+async function imp(f){let o;if(/\.json$/i.test(f.name))o=JSON.parse(await f.text());else{const z=await JSZip.loadAsync(f);o=JSON.parse(await z.file('plants.json').async('string'));for(const p of o)for(const k in p.ph||{}){const e=z.file(p.ph[k]);if(e)p.ph[k]=new Blob([await e.async('blob')],{type:'image/jpeg'})}}
+for(const p of o)await put(p);await load()}
+const qa=()=>sheet(`<p class="np"><button onclick="print()">🖨</button> <button class="o" data-a="x">✕</button></p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">${PL.map(p=>`<div style="text-align:center;font-size:12px;break-inside:avoid">${qrimg(p.id)}<br><b>${esc(p.id)}</b><br>${esc(p.sci||nm(p))}</div>`).join('')}</div>`);
+const ic=L.divIcon({html:'<div style="font-size:30px;line-height:30px">📍</div>',className:'',iconSize:[30,30],iconAnchor:[15,30]});
+function adjust(){const c=adj||(fp.lat&&{lat:fp.lat,lng:fp.lng})||(pos&&{lat:pos.latitude,lng:pos.longitude})||map.getCenter();close();setV('map');$('#adj').style.display='flex';
+setTimeout(()=>{map.invalidateSize();am=L.marker([c.lat,c.lng],{draggable:true,icon:ic}).addTo(map);map.setView([c.lat,c.lng],19)},80)}
+function adjEnd(){am&&map.removeLayer(am);am=null;$('#adj').style.display='none';$('#sh').classList.add('on')}
+function adjOk(){if(!am)return;const l=am.getLatLng();adj={lat:l.lat,lng:l.lng};adjEnd();gpsUI()}
+// ---- events
+document.addEventListener('click',e=>{const x=e.target,a=x.closest('[data-a]'),c=x.closest('.card'),v=x.closest('[data-v]:not(.ch)'),g=x.closest('.ch[data-g]'),m=x.closest('#shb .ch');
+if(x.id=='sh')return close();
+if(a){const k=a.dataset.a,id=a.dataset.id;
+if(k=='x')close();else if(k=='add')form();else if(k=='edit')form(PL.find(p=>p.id==id));
+else if(k=='del'){if(confirm(t('sure')))rm(id).then(load).then(close)}
+else if(k=='sv')save();else if(k=='adj')adjust();else if(k=='aok')adjOk();else if(k=='acx')adjEnd();else if(k=='exp')exp();else if(k=='imp')$('#imf').click();else if(k=='qa')qa();
+else if(k=='lang'){LG=LG=='bn'?'en':'bn';try{localStorage.lang=LG}catch(e){}render()}return}
+if(c)return det(c.dataset.id);if(v)return setV(v.dataset.v);
+if(g){const k=g.dataset.g,s=k=='h'?F.h:F.o;if(k=='now')F.now^=1;else s.has(g.dataset.v)?s.delete(g.dataset.v):s.add(g.dataset.v);render()}
+if(m)m.classList.toggle('on')});
+document.addEventListener('change',async e=>{const x=e.target;
+if(x.id=='fs'){F.fam=x.value;render()}else if(x.id=='ov')gpsUI();else if(x.id=='imf'&&x.files[0])imp(x.files[0]);
+else if(x.type=='file'&&x.closest('.ph')){const lb=x.closest('label'),b=await rs(x.files[0]);tmp[lb.dataset.k]=b;let i=lb.querySelector('img');if(!i){i=new Image;lb.append(i)}i.src=URL.createObjectURL(b)}});
+$('#mr').oninput=e=>{MS=+e.target.value;mk();ml()};$('#sat').onclick=()=>map.hasLayer(sat)?map.removeLayer(sat):sat.addTo(map);
+let dt;$('#q').oninput=e=>{clearTimeout(dt);dt=setTimeout(()=>{F.q=e.target.value;mk();ls();cal()},150)};
+(async()=>{COLLECTOR||document.body.classList.add('vw');await open();await load();const id=new URLSearchParams(location.search).get('id');if(id)det(id)})();
+</script></body></html>
