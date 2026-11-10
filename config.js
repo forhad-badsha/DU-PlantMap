@@ -1,1 +1,1 @@
-window.PNKEY='এখানে-তোমার-Key-বসাও';
+window.PNKEY='2b10pM0BQAd6HHa3iLFlo1Iu';
