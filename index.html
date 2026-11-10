@@ -15,7 +15,7 @@ main{flex:1;position:relative;overflow:hidden}
 nav{display:flex;background:var(--c);border-top:1px solid var(--b);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;background:none;color:var(--m);border-radius:0;font-size:11px;padding:7px 2px}nav button.on{color:var(--g);font-weight:700}
 nav .plus{flex:0 0 52px;background:var(--g);color:#fff;border-radius:50%;height:52px;margin:-14px 4px 4px;font-size:26px;padding:0}
-.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;cursor:pointer}
+.card,.rs{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;cursor:pointer}
 .card img{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--b)}
 .ch{display:inline-block;padding:5px 10px;border:1px solid var(--b);border-radius:99px;margin:2px;font-size:13px;cursor:pointer;user-select:none}
 .ch.on{background:var(--g);color:#fff;border-color:var(--g)}
@@ -37,24 +37,27 @@ td:first-child,th:first-child{position:sticky;left:0;background:var(--c);text-al
 <main>
 <div class="v on" id="v_map"><div id="map"></div><button id="loc">📍</button><button id="sat">🛰️</button><div id="ms"><b id="ml" style="min-width:84px"></b><input type="range" id="mr" min="0" max="12" value="0"></div><div id="adj"><span style="flex:1" data-i="drag"></span><button data-a="aok">✔</button><button class="o" data-a="acx">✕</button></div></div>
 <div class="v" id="v_list"><input id="q"><div id="fb"></div><div id="lc" style="margin-top:8px"></div></div>
+<div class="v" id="v_id"><p data-i="idhelp" style="margin-bottom:8px"></p><div class="ph" id="idp"></div><button data-a="idgo" data-i="idbtn"></button><div id="ir" style="margin-top:10px"></div><p style="margin-top:12px"><small data-i="credit"></small></p></div>
 <div class="v" id="v_cal"><div id="cb" style="overflow:auto"></div></div>
 <div class="v" id="v_more"><p id="cnt" style="margin-bottom:12px"></p>
 <p class="col"><button data-a="exp" data-i="exp"></button></p><br>
 <p class="col"><button class="o" data-a="imp" data-i="imp"></button><input type="file" id="imf" accept=".zip,.json" hidden></p><br>
 <p><button class="o" data-a="qa" data-i="qr"></button></p><br>
-<p><button class="o" data-a="lang" data-i="lang"></button></p></div>
+<p class="col"><input id="pk" placeholder="Pl@ntNet API key"></p><p><button class="o" data-a="lang" data-i="lang"></button></p><p style="margin-top:14px"><small data-i="credit"></small></p></div>
 </main>
-<nav><button data-v="map" class="on">🗺️<br><span data-i="map"></span></button><button data-v="list">🌳<br><span data-i="list"></span></button><button class="plus col" data-a="add">＋</button><button data-v="cal">📅<br><span data-i="cal"></span></button><button data-v="more">⚙️<br><span data-i="more"></span></button></nav>
+<nav><button data-v="map" class="on">🗺️<br><span data-i="map"></span></button><button data-v="list">🌳<br><span data-i="list"></span></button><button class="plus col" data-a="add">＋</button><button data-v="id">🔍<br><span data-i="id"></span></button><button data-v="cal">📅<br><span data-i="cal"></span></button><button data-v="more">⚙️<br><span data-i="more"></span></button></nav>
 <div id="sh"><div id="shb"></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-const COLLECTOR=true; // false = public viewer-only mode (hides add/edit/export)
-const T={map:'ম্যাপ|Map',list:'গাছ|Plants',add:'নতুন গাছ|New plant',cal:'ক্যালেন্ডার|Calendar',more:'আরও|More',search:'খুঁজুন…|Search…',fam:'গোত্র|Family',now:'এখন ফুল ফুটছে|Flowering now',tree:'বৃক্ষ|Tree',shrub:'গুল্ম|Shrub',herb:'ওষধি|Herb',climb:'লতা|Climber',other:'অন্যান্য|Other',nat:'দেশি|Native',exo:'বিদেশি|Exotic',bn:'বাংলা নাম|Bangla name',en:'English name',sci:'বৈজ্ঞানিক নাম|Scientific name',fl:'ফুল ফোটার মাস|Flowering months',fr:'ফল ধরার মাস|Fruiting months',note:'নোট|Notes',save:'সেভ|Save',edit:'সম্পাদনা|Edit',del:'মুছুন|Delete',p_whole:'পুরো গাছ|Whole tree',p_bark:'কাণ্ড|Bark',p_leaf:'পাতা|Leaf',p_fruit:'ফুল/ফল|Flower/fruit',wait:'অপেক্ষা করুন|wait',ov:'কম নির্ভুলতায়ও সেভ করব|Save even if accuracy is low',dup:'৩ মিটারের মধ্যে আরেকটি গাছ আছে:|Another plant within 3 m:',upd:'বর্তমান লোকেশন দিয়ে আপডেট|Update with current location',exp:'ডেটা এক্সপোর্ট (ZIP)|Export data (ZIP)',imp:'ডেটা ইমপোর্ট|Import data',qr:'সব QR প্রিন্ট|Print all QR',lang:'English / বাংলা',sure:'নিশ্চিত?|Sure?',total:'মোট গাছ|Total plants',adj:'ম্যাপে ঠিক করুন|Set on map',drag:'পিন টেনে ঠিক জায়গায় বসান|Drag the pin to the exact spot',all:'সব মাস|All months'};
+const PNKEY=''; // paste the Pl@ntNet API key here (it is domain-restricted) so every visitor can use Identify
+let ADM=false;try{const a=new URLSearchParams(location.search).get('admin');if(a!==null)localStorage.adm=a=='1'?'1':'';ADM=!!localStorage.adm}catch(e){}
+const KEY=()=>{try{return PNKEY||localStorage.pk||''}catch(e){return PNKEY}};
+const T={map:'ম্যাপ|Map',list:'গাছ|Plants',add:'নতুন গাছ|New plant',cal:'ক্যালেন্ডার|Calendar',more:'আরও|More',search:'খুঁজুন…|Search…',fam:'গোত্র|Family',now:'এখন ফুল ফুটছে|Flowering now',tree:'বৃক্ষ|Tree',shrub:'গুল্ম|Shrub',herb:'ওষধি|Herb',climb:'লতা|Climber',other:'অন্যান্য|Other',nat:'দেশি|Native',exo:'বিদেশি|Exotic',bn:'বাংলা নাম|Bangla name',en:'English name',sci:'বৈজ্ঞানিক নাম|Scientific name',fl:'ফুল ফোটার মাস|Flowering months',fr:'ফল ধরার মাস|Fruiting months',note:'নোট|Notes',save:'সেভ|Save',edit:'সম্পাদনা|Edit',del:'মুছুন|Delete',p_whole:'পুরো গাছ|Whole tree',p_bark:'কাণ্ড|Bark',p_leaf:'পাতা|Leaf',p_fruit:'ফুল/ফল|Flower/fruit',wait:'অপেক্ষা করুন|wait',ov:'কম নির্ভুলতায়ও সেভ করব|Save even if accuracy is low',dup:'৩ মিটারের মধ্যে আরেকটি গাছ আছে:|Another plant within 3 m:',upd:'বর্তমান লোকেশন দিয়ে আপডেট|Update with current location',exp:'ডেটা এক্সপোর্ট (ZIP)|Export data (ZIP)',imp:'ডেটা ইমপোর্ট|Import data',qr:'সব QR প্রিন্ট|Print all QR',lang:'English / বাংলা',sure:'নিশ্চিত?|Sure?',total:'মোট গাছ|Total plants',adj:'ম্যাপে ঠিক করুন|Set on map',drag:'পিন টেনে ঠিক জায়গায় বসান|Drag the pin to the exact spot',all:'সব মাস|All months',id:'শনাক্ত|Identify',idhelp:'পাতা, কাণ্ড বা ফুল-ফলের ছবি দিয়ে গাছের নাম জানুন (ইন্টারনেট লাগবে)|Photograph leaf, bark or flower/fruit to find the species (internet needed)',idbtn:'শনাক্ত করো|Identify',nokey:'API Key দেওয়া হয়নি|No API key set',quota:'আজকের সীমা শেষ, কাল চেষ্টা করুন|Daily limit reached, try tomorrow',fail:'ত্রুটি|Error',nomatch:'মিল পাওয়া যায়নি|No match found',ver:'যাচাই করেছি|Verified',unver:'যাচাই বাকি|Unverified',oncampus:'ক্যাম্পাসে আছে|On campus',auto:'আগের তথ্য বসেছে|filled from earlier data',busy:'খোঁজা হচ্ছে…|Identifying…',pic:'অন্তত একটা ছবি দিন|Add at least one photo',credit:'ছবি দেখে শনাক্তকরণ সেবাটি Pl@ntNet recognition API-এর ওপর ভিত্তি করে (https://my.plantnet.org/)|The image-based plant species identification service used, is based on the Pl@ntNet recognition API, regularly updated and accessible through the site https://my.plantnet.org/'};
 const M={bn:['জানু','ফেব্রু','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টে','অক্টো','নভে','ডিসে'],en:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']};
 const HC={tree:'#2e7d32',shrub:'#8bc34a',herb:'#fbc02d',climb:'#8e24aa',other:'#607d8b'},K=['whole','bark','leaf','fruit'];
-let PL=[],LG='bn',F={q:'',h:new Set,o:new Set,fam:'',now:0},pos=null,tmp={},lt=0,first=1,db,MS=0,adj=null,am=null,fp=null;
+let PL=[],LG='bn',F={q:'',h:new Set,o:new Set,fam:'',now:0,unv:0},pos=null,tmp={},lt=0,first=1,db,MS=0,adj=null,am=null,fp=null,RS=[],itmp={};
 try{LG=localStorage.lang||'bn'}catch(e){}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const t=k=>T[k].split('|')[LG=='bn'?0:1],mn=new Date().getMonth()+1;
@@ -83,15 +86,15 @@ let meM;function me(){if(!pos)return;const ll=[pos.latitude,pos.longitude];meM?m
 navigator.geolocation&&navigator.geolocation.watchPosition(p=>{pos=p.coords;me();gpsUI();if(Date.now()-lt>5e3){lt=Date.now();ls()}},()=>{},{enableHighAccuracy:true,maximumAge:2000});
 $('#loc').onclick=()=>pos&&map.setView([pos.latitude,pos.longitude],19);
 // ---- filtering + views
-const FL=()=>{const s=F.q.toLowerCase();return PL.filter(p=>(!s||[p.id,p.bn,p.en,p.sci,p.fam].join(' ').toLowerCase().includes(s))&&(!F.h.size||F.h.has(p.hab))&&(!F.o.size||F.o.has(p.org))&&(!F.fam||p.fam==F.fam)&&(!F.now||(p.fl||[]).includes(mn)))};
+const FL=()=>{const s=F.q.toLowerCase();return PL.filter(p=>(!s||[p.id,p.bn,p.en,p.sci,p.fam].join(' ').toLowerCase().includes(s))&&(!F.h.size||F.h.has(p.hab))&&(!F.o.size||F.o.has(p.org))&&(!F.fam||p.fam==F.fam)&&(!F.now||(p.fl||[]).includes(mn))&&(!F.unv||!p.ver))};
 function mk(){lg.clearLayers();FL().forEach(p=>{let o={radius:9,color:'#fff',weight:2,fillColor:HC[p.hab]||HC.other,fillOpacity:.9};
 if(MS){const f=(p.fl||[]).includes(MS),r=(p.fr||[]).includes(MS);o=f||r?{radius:10,color:f&&r?'#ff9800':'#fff',weight:f&&r?4:2,fillColor:f?'#e91e63':'#ff9800',fillOpacity:.95}:{radius:5,color:'#fff',weight:1,fillColor:'#9e9e9e',fillOpacity:.4}}
 L.circleMarker([p.lat,p.lng],o).on('click',()=>{if(!am)det(p.id)}).addTo(lg)})}
 function ml(){$('#ml').innerHTML=MS?M[LG][MS-1]+' <span style="color:#e91e63">●</span><span style="color:#ff9800">●</span>':t('all')}
 function fb(){const fams=[...new Set(PL.map(p=>p.fam).filter(Boolean))].sort(),c=(g,v,on,l)=>`<span class="ch${on?' on':''}" data-g="${g}" data-v="${v}">${l}</span>`;
-$('#fb').innerHTML=Object.keys(HC).map(h=>c('h',h,F.h.has(h),t(h))).join('')+['nat','exo'].map(o=>c('o',o,F.o.has(o),t(o))).join('')+c('now','',F.now,'🌸 '+t('now'))+`<select id="fs"><option value="">${t('fam')}: ∗</option>${fams.map(f=>`<option${F.fam==f?' selected':''}>${esc(f)}</option>`).join('')}</select>`}
+$('#fb').innerHTML=Object.keys(HC).map(h=>c('h',h,F.h.has(h),t(h))).join('')+['nat','exo'].map(o=>c('o',o,F.o.has(o),t(o))).join('')+c('now','',F.now,'🌸 '+t('now'))+'<span class="col">'+c('unv','',F.unv,'⚠ '+t('unver'))+'</span>'+`<select id="fs"><option value="">${t('fam')}: ∗</option>${fams.map(f=>`<option${F.fam==f?' selected':''}>${esc(f)}</option>`).join('')}</select>`}
 function ls(){const a=FL();if(pos)a.sort((x,y)=>dist(x)-dist(y));
-$('#lc').innerHTML=a.slice(0,200).map(p=>`<div class="card" data-id="${esc(p.id)}"><img src="${th(p)}" alt=""><div style="flex:1"><b>${esc(nm(p))}</b><br><i>${esc(p.sci||'')}</i><br><small>${esc(p.id)} · ${esc(p.fam||'')}${pos?' · '+Math.round(dist(p))+' m':''}</small></div></div>`).join('')||'—'}
+$('#lc').innerHTML=a.slice(0,200).map(p=>`<div class="card" data-id="${esc(p.id)}"><img src="${th(p)}" alt=""><div style="flex:1"><b>${esc(nm(p))}</b><br><i>${esc(p.sci||'')}</i><br><small>${esc(p.id)}<span class="col">${p.ver?' ✔':' ⚠'}</span> · ${esc(p.fam||'')}${pos?' · '+Math.round(dist(p))+' m':''}</small></div></div>`).join('')||'—'}
 function cal(){const a=FL().slice(0,200),H=M[LG];
 $('#cb').innerHTML=`<table><tr><th>${t('list')}</th>${H.map((m,i)=>`<th${i+1==mn?' style="color:var(--g);text-decoration:underline"':''}>${m}</th>`).join('')}</tr>${a.map(p=>`<tr><td>${esc(nm(p))}</td>${H.map((_,i)=>{const f=(p.fl||[]).includes(i+1),r=(p.fr||[]).includes(i+1);return`<td style="background:${f&&r?'linear-gradient(90deg,#e91e63 50%,#ff9800 50%)':f?'#e91e63':r?'#ff9800':''}"></td>`}).join('')}</tr>`).join('')}</table><p style="margin-top:8px"><span style="color:#e91e63">■</span> ${t('fl')} &nbsp;<span style="color:#ff9800">■</span> ${t('fr')}</p>`}
 function render(){mk();ml();fb();ls();cal();$$('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));$('#q').placeholder=t('search');$('#cnt').textContent=t('total')+': '+PL.length}
@@ -103,25 +106,25 @@ sheet(`<div style="display:flex;gap:6px;overflow:auto">${K.map(k=>src(p,k)?`<img
 <h2 style="margin-top:8px">${esc(nm(p))}</h2><p><i>${esc(p.sci||'')}</i> · ${esc(p.fam||'')}</p><p>${t(p.hab||'other')} · ${t(p.org||'nat')}</p>
 <p>🌸 ${mm(p.fl)}<br>🍎 ${mm(p.fr)}</p><p>${esc(p.note||'')}</p>
 <p><small>${esc(p.id)} · ${(+p.lat).toFixed(6)}, ${(+p.lng).toFixed(6)} (${p.man?'✋':'±'+Math.round(p.acc||0)+' m'})</small></p><div>${qrimg(p.id)}</div>
-<p style="margin-top:10px"><span class="col"><button data-a="edit" data-id="${esc(p.id)}">${t('edit')}</button> <button class="o" data-a="del" data-id="${esc(p.id)}">${t('del')}</button></span> <button class="o" data-a="x">✕</button></p>`)}
+<p style="margin-top:10px"><span class="col">${p.ver?'':`<button data-a="ver" data-id="${esc(p.id)}">✔ ${t('ver')}</button> `}<button data-a="edit" data-id="${esc(p.id)}">${t('edit')}</button> <button class="o" data-a="del" data-id="${esc(p.id)}">${t('del')}</button></span> <button class="o" data-a="x">✕</button></p>`)}
 const mc=a=>M[LG].map((m,i)=>`<span class="ch${(a||[]).includes(i+1)?' on':''}" data-m="${i+1}">${m}</span>`).join('');
 const opt=(o,v)=>o.map(k=>`<option value="${k}"${k==v?' selected':''}>${t(k)}</option>`).join('');
 function form(p){adj=null;fp=p||{};const e=!!p;p=p||{id:'CH-'+String(PL.reduce((n,x)=>Math.max(n,+(x.id.match(/\d+$/)||0)),0)+1).padStart(2,'0'),fl:[],fr:[],ph:{},hab:'tree',org:'nat'};tmp={...p.ph};
 const fams=[...new Set(PL.map(x=>x.fam).filter(Boolean))];
 sheet(`<h3>${t(e?'edit':'add')}</h3><div class="ph">${K.map(k=>`<label data-k="${k}"><span>📷 ${t('p_'+k)}</span><input type="file" accept="image/*" capture="environment" hidden>${tmp[k]?`<img src="${sv_(tmp[k])}" alt="">`:''}</label>`).join('')}</div>
-<p id="gs"></p><button class="o" data-a="adj" style="margin-bottom:8px">🗺️ ${t('adj')}</button>${e?`<label><input type="checkbox" id="ul"> ${t('upd')}</label>`:`<label><input type="checkbox" id="ov"> ${t('ov')}</label>`}
+<p id="gs"></p><button class="o" data-a="adj" style="margin-bottom:8px">🗺️ ${t('adj')}</button> <button class="o" data-a="fid" style="margin-bottom:8px">🔍 ${t('idbtn')}</button><div id="fr"></div>${e?`<label><input type="checkbox" id="ul"> ${t('upd')}</label>`:`<label><input type="checkbox" id="ov"> ${t('ov')}</label>`}
 <input id="fid" value="${esc(p.id)}" ${e?'readonly':''} placeholder="ID"><input id="fbn" placeholder="${t('bn')}" value="${esc(p.bn)}"><input id="fen" placeholder="${t('en')}" value="${esc(p.en)}"><input id="fsc" placeholder="${t('sci')}" value="${esc(p.sci)}">
 <input id="ffa" list="dl" placeholder="${t('fam')}" value="${esc(p.fam)}"><datalist id="dl">${fams.map(f=>`<option value="${esc(f)}">`).join('')}</datalist>
 <select id="fh">${opt(Object.keys(HC),p.hab)}</select><select id="fo">${opt(['nat','exo'],p.org)}</select>
 <p>🌸 ${t('fl')}</p><div id="ffl">${mc(p.fl)}</div><p>🍎 ${t('fr')}</p><div id="ffr">${mc(p.fr)}</div>
 <textarea id="fno" rows="2" placeholder="${t('note')}">${esc(p.note)}</textarea>
-<button id="sv" data-a="sv">${t('save')}</button> <button class="o" data-a="x">✕</button>`);gpsUI()}
+<label><input type="checkbox" id="fvr"${p.ver?' checked':''}> ✔ ${t('ver')}</label><br><button id="sv" data-a="sv">${t('save')}</button> <button class="o" data-a="x">✕</button>`);gpsUI()}
 function gpsUI(){const g=$('#gs');if(!g)return;const a=pos?pos.accuracy:0;
 g.innerHTML=pos?`📍 ±${Math.round(a)} m <b style="color:${a<=10?'#2e7d32':a<=20?'#f9a825':'#d32f2f'}">${a<=20?'✔':t('wait')}</b>`:'📍 …';if(adj)g.innerHTML+=' · 🗺️ ✔';
 const s=$('#sv');if(s&&!$('#fid').readOnly)s.disabled=!adj&&(!pos||(a>20&&!$('#ov').checked))}
 async function save(){const e=$('#fid').readOnly,id=$('#fid').value.trim(),old=PL.find(x=>x.id==id),v=i=>$('#'+i).value.trim(),mo=i=>$$('#'+i+' .ch.on').map(x=>+x.dataset.m);
 if(!id||(!e&&old))return alert('ID!');
-const p={...(old||{}),id,bn:v('fbn'),en:v('fen'),sci:v('fsc'),fam:v('ffa'),hab:v('fh'),org:v('fo'),note:v('fno'),fl:mo('ffl'),fr:mo('ffr'),ph:tmp,ts:old?old.ts:Date.now()};
+const p={...(old||{}),id,bn:v('fbn'),en:v('fen'),sci:v('fsc'),fam:v('ffa'),hab:v('fh'),org:v('fo'),note:v('fno'),ver:$('#fvr').checked?1:0,fl:mo('ffl'),fr:mo('ffr'),ph:tmp,ts:old?old.ts:Date.now()};
 if(adj||!e||$('#ul').checked){if(adj){p.lat=adj.lat;p.lng=adj.lng;p.man=1}else{if(!pos)return;p.lat=pos.latitude;p.lng=pos.longitude;p.acc=pos.accuracy;delete p.man}
 const n=PL.find(x=>x.id!=id&&D(x.lat,x.lng,p.lat,p.lng)<3);if(n&&!confirm(t('dup')+' '+n.id))return}
 await put(p);await load();close()}
@@ -131,6 +134,22 @@ z.file('plants.json',JSON.stringify(out,null,1));const a=document.createElement(
 async function imp(f){let o;if(/\.json$/i.test(f.name))o=JSON.parse(await f.text());else{const z=await JSZip.loadAsync(f);o=JSON.parse(await z.file('plants.json').async('string'));for(const p of o)for(const k in p.ph||{}){const e=z.file(p.ph[k]);if(e)p.ph[k]=new Blob([await e.async('blob')],{type:'image/jpeg'})}}
 for(const p of o)await put(p);await load()}
 const qa=()=>sheet(`<p class="np"><button onclick="print()">🖨</button> <button class="o" data-a="x">✕</button></p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">${PL.map(p=>`<div style="text-align:center;font-size:12px;break-inside:avoid">${qrimg(p.id)}<br><b>${esc(p.id)}</b><br>${esc(p.sci||nm(p))}</div>`).join('')}</div>`);
+// ---- identification (Pl@ntNet)
+function applyPr(pr){const v=(i,x)=>{if(x&&!$('#'+i).value)$('#'+i).value=x};v('fbn',pr.bn);v('fen',pr.en);v('fsc',pr.sci);v('ffa',pr.fam);$('#fh').value=pr.hab||'tree';$('#fo').value=pr.org||'nat';
+[['ffl',pr.fl],['ffr',pr.fr]].forEach(([i,a])=>$$('#'+i+' .ch').forEach(c=>c.classList.toggle('on',(a||[]).includes(+c.dataset.m))))}
+function fillFrom(r){const s=r.species,sc=s.scientificNameWithoutAuthor,pr=PL.find(x=>x.sci==sc);$('#fsc').value=sc;$('#ffa').value=s.family.scientificNameWithoutAuthor;if(!$('#fen').value)$('#fen').value=(s.commonNames||[])[0]||'';
+if(pr)applyPr(pr);$('#fvr').checked=false;$('#fr').innerHTML='✔ <i>'+esc(sc)+'</i>'+(pr?' · '+t('auto'):'')}
+async function idrun(P,box){const f=[['whole','habit'],['bark','bark'],['leaf','leaf'],['fruit','auto']].filter(([k])=>P[k] instanceof Blob);
+if(!f.length){box.textContent=t('pic');return null}const k=KEY();if(!k){box.textContent=t('nokey');return null}box.textContent=t('busy');
+const fd=new FormData();f.forEach(([s,o])=>{fd.append('images',P[s],s+'.jpg');fd.append('organs',o)});
+try{const r=await fetch('https://my-api.plantnet.org/v2/identify/all?api-key='+encodeURIComponent(k),{method:'POST',body:fd});
+if(r.status==404){box.textContent=t('nomatch');return null}if(r.status==429){box.textContent=t('quota');return null}if(!r.ok){box.textContent=t('fail')+' '+r.status;return null}
+RS=(await r.json()).results.slice(0,5);return RS}catch(e){box.textContent=t('fail');return null}}
+const nms=r=>esc((r.species.commonNames||[]).slice(0,3).join(', '));
+async function idgo(){const b=$('#ir'),R_=await idrun(itmp,b);if(!R_)return;
+b.innerHTML=R_.map(r=>{const sc=r.species.scientificNameWithoutAuthor,pc=PL.find(x=>x.sci==sc);return`<div class="rs"><div style="flex:1"><b><i>${esc(sc)}</i></b><br><small>${esc(r.species.family.scientificNameWithoutAuthor)} · ${nms(r)}</small>${pc?`<br><button data-a="goc" data-id="${esc(pc.id)}" style="margin-top:4px;padding:4px 10px">📍 ${t('oncampus')}</button>`:''}</div><b>${Math.round(r.score*100)}%</b></div>`}).join('')}
+async function fidn(){const b=$('#fr'),R_=await idrun(tmp,b);if(!R_)return;
+b.innerHTML=R_.map((r,n)=>`<div class="rs" data-n="${n}"><div style="flex:1"><b><i>${esc(r.species.scientificNameWithoutAuthor)}</i></b><br><small>${nms(r)}</small></div><b>${Math.round(r.score*100)}%</b></div>`).join('')}
 const ic=L.divIcon({html:'<div style="font-size:30px;line-height:30px">📍</div>',className:'',iconSize:[30,30],iconAnchor:[15,30]});
 function adjust(){const c=adj||(fp.lat&&{lat:fp.lat,lng:fp.lng})||(pos&&{lat:pos.latitude,lng:pos.longitude})||map.getCenter();close();setV('map');$('#adj').style.display='flex';
 setTimeout(()=>{map.invalidateSize();am=L.marker([c.lat,c.lng],{draggable:true,icon:ic}).addTo(map);map.setView([c.lat,c.lng],19)},80)}
@@ -142,15 +161,15 @@ if(x.id=='sh')return close();
 if(a){const k=a.dataset.a,id=a.dataset.id;
 if(k=='x')close();else if(k=='add')form();else if(k=='edit')form(PL.find(p=>p.id==id));
 else if(k=='del'){if(confirm(t('sure')))rm(id).then(load).then(close)}
-else if(k=='sv')save();else if(k=='adj')adjust();else if(k=='aok')adjOk();else if(k=='acx')adjEnd();else if(k=='exp')exp();else if(k=='imp')$('#imf').click();else if(k=='qa')qa();
+else if(k=='sv')save();else if(k=='idgo')idgo();else if(k=='fid')fidn();else if(k=='ver'){const p=PL.find(x=>x.id==id);p.ver=1;put(p).then(load).then(()=>det(id))}else if(k=='goc'){const p=PL.find(x=>x.id==id);setV('map');map.setView([p.lat,p.lng],19);det(id)}else if(k=='adj')adjust();else if(k=='aok')adjOk();else if(k=='acx')adjEnd();else if(k=='exp')exp();else if(k=='imp')$('#imf').click();else if(k=='qa')qa();
 else if(k=='lang'){LG=LG=='bn'?'en':'bn';try{localStorage.lang=LG}catch(e){}render()}return}
-if(c)return det(c.dataset.id);if(v)return setV(v.dataset.v);
-if(g){const k=g.dataset.g,s=k=='h'?F.h:F.o;if(k=='now')F.now^=1;else s.has(g.dataset.v)?s.delete(g.dataset.v):s.add(g.dataset.v);render()}
+const rr=x.closest('#fr .rs');if(rr)return fillFrom(RS[+rr.dataset.n]);if(c)return det(c.dataset.id);if(v)return setV(v.dataset.v);
+if(g){const k=g.dataset.g;if(k=='now')F.now^=1;else if(k=='unv')F.unv^=1;else{const s=k=='h'?F.h:F.o;s.has(g.dataset.v)?s.delete(g.dataset.v):s.add(g.dataset.v)}render()}
 if(m)m.classList.toggle('on')});
 document.addEventListener('change',async e=>{const x=e.target;
-if(x.id=='fs'){F.fam=x.value;render()}else if(x.id=='ov')gpsUI();else if(x.id=='imf'&&x.files[0])imp(x.files[0]);
-else if(x.type=='file'&&x.closest('.ph')){const lb=x.closest('label'),b=await rs(x.files[0]);tmp[lb.dataset.k]=b;let i=lb.querySelector('img');if(!i){i=new Image;lb.append(i)}i.src=URL.createObjectURL(b)}});
+if(x.id=='fs'){F.fam=x.value;render()}else if(x.id=='ov')gpsUI();else if(x.id=='pk'){try{localStorage.pk=x.value.trim()}catch(e){}}else if((x.id=='fsc'||x.id=='fbn')&&!$('#fid').readOnly){const pr=PL.find(p=>p[x.id=='fsc'?'sci':'bn']==x.value.trim());pr&&applyPr(pr)}else if(x.id=='imf'&&x.files[0])imp(x.files[0]);
+else if(x.type=='file'&&x.closest('.ph')){const lb=x.closest('label'),b=await rs(x.files[0]);(x.closest('#v_id')?itmp:tmp)[lb.dataset.k]=b;let i=lb.querySelector('img');if(!i){i=new Image;lb.append(i)}i.src=URL.createObjectURL(b)}});
 $('#mr').oninput=e=>{MS=+e.target.value;mk();ml()};$('#sat').onclick=()=>map.hasLayer(sat)?map.removeLayer(sat):sat.addTo(map);
 let dt;$('#q').oninput=e=>{clearTimeout(dt);dt=setTimeout(()=>{F.q=e.target.value;mk();ls();cal()},150)};
-(async()=>{COLLECTOR||document.body.classList.add('vw');await open();await load();const id=new URLSearchParams(location.search).get('id');if(id)det(id)})();
+(async()=>{ADM||document.body.classList.add('vw');try{$('#pk').value=localStorage.pk||''}catch(e){}$('#idp').innerHTML=K.map(k=>`<label data-k="${k}"><span>📷 <span data-i="p_${k}"></span></span><input type="file" accept="image/*" hidden></label>`).join('');await open();await load();const id=new URLSearchParams(location.search).get('id');if(id)det(id)})();
 </script></body></html>
